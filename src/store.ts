@@ -1,10 +1,11 @@
-import { User } from "./types";
+import { User } from "./generated/prisma/client";
+import { PrismaClient } from "./generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-/**
- * Users are stored in memory for now
- * Keyed by username
- */
-const users = new Map<string, User>();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+export const prisma = new PrismaClient({
+  adapter: adapter,
+});
 
 /**
  * Creates a new user and adds it to the in-memory user list.
@@ -13,16 +14,11 @@ const users = new Map<string, User>();
  * @param passwordHash  The hashed value of the user's password
  * @returns newUser     The generated new user entry
  */
-export function createUser(username: string, passwordHash: string): User {
-  const newUser: User = {
-    id: crypto.randomUUID(),
-    username: username,
-    hashedPassword: passwordHash,
-  };
-
-  users.set(username, newUser);
-
-  return newUser;
+export async function createUser(
+  username: string,
+  passwordHash: string,
+): Promise<User> {
+  return await prisma.user.create({ data: { username, passwordHash } });
 }
 
 /**
@@ -31,8 +27,11 @@ export function createUser(username: string, passwordHash: string): User {
  * @param username              The provided username for searching
  * @returns User | undefined    The matching user is returned if found, else undefined
  */
-export function findUserByUsername(username: string): User | undefined {
-  return users.get(username) ?? undefined;
+export async function findUserByUsername(
+  username: string,
+): Promise<User | undefined> {
+  const user = await prisma.user.findUnique({ where: { username } });
+  return user ?? undefined;
 }
 
 /**
@@ -41,12 +40,7 @@ export function findUserByUsername(username: string): User | undefined {
  * @param id                    The provided id for searching
  * @returns User | undefined    The matching user is returned if found, else undefined
  */
-export function findUserById(id: string): User | undefined {
-  for (const user of users.values()) {
-    if (user.id === id) {
-      return user;
-    }
-  }
-
-  return undefined;
+export async function findUserById(id: string): Promise<User | undefined> {
+  const user = await prisma.user.findUnique({ where: { id } });
+  return user ?? undefined;
 }
