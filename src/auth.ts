@@ -18,14 +18,14 @@ router.post("/register", async (req: Request, res: Response) => {
     return res.status(400).send({ error: "Missing details." });
   }
 
-  if (findUserByUsername(username)) {
+  if ((await findUserByUsername(username)) !== undefined) {
     return res.status(409).send({ error: "Username already taken." });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const newUser = createUser(username, passwordHash);
-  return res.status(201).send({ id: newUser.id, username: newUser.username });
+  const newUser = await createUser(username, passwordHash);
+  return res.status(201).send(newUser);
 });
 
 /**
@@ -36,12 +36,12 @@ router.post("/register", async (req: Request, res: Response) => {
  */
 router.post("/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
-  const user = findUserByUsername(username);
+  const user = await findUserByUsername(username);
   if (!user) {
     return res.status(401).send({ error: "Invalid login credentials." });
   }
 
-  if (await bcrypt.compare(password, user.hashedPassword)) {
+  if (await bcrypt.compare(password, user.passwordHash)) {
     req.session.userId = user.id;
     return res.status(200).send({ id: user.id, username: user.username });
   }
@@ -54,9 +54,9 @@ router.post("/login", async (req: Request, res: Response) => {
  *
  * Returns the user's safe credentials (username and id) if the user is in a session, else returns a status code of 401 Unauthorized.
  */
-router.get("/me", (req: Request, res: Response) => {
+router.get("/me", async (req: Request, res: Response) => {
   if (req.session.userId) {
-    const user = findUserById(req.session.userId);
+    const user = await findUserById(req.session.userId);
 
     if (user) {
       return res.status(200).send({ id: user.id, username: user.username });
