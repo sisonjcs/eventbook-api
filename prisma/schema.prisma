@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String       @id @default(uuid())
+  username      String       @unique
+  passwordHash  String
+  createdAt     DateTime     @default(now())
+  event         Event[]
+  booking       Booking[]
+}
+
+model Event {
+  id            String        @id @default(uuid())
+  title         String
+  description   String
+  totalSeats    Int
+  createdAt     DateTime      @default(now())
+  userId        String       
+  organizer     User          @relation(fields: [userId], references: [id])
+  booking       Booking[]
+}
+
+model Booking {
+  id            String      @id @default(uuid())
+  userId        String
+  bookedBy      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId       String
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status        Status
+  createdAt     DateTime    @default(now())    
+}
+
+enum Status {
+  CONFIRMED
+  PENDING
+}
