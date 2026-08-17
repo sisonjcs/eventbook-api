@@ -2,7 +2,7 @@ import { User } from "../generated/prisma/client";
 import { prisma } from "../prisma";
 
 /**
- * Creates a new user and adds it to the in-memory user list.
+ * Creates a new user based on the given parameters.
  *
  * @param username      The username set by the user
  * @param passwordHash  The hashed value of the user's password
