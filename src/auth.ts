@@ -1,5 +1,9 @@
 import { Router, Request, Response } from "express";
-import { createUser, findUserById, findUserByUsername } from "./store";
+import {
+  createUser,
+  findUserById,
+  findUserByUsername,
+} from "./store/userStore";
 import bcrypt from "bcrypt";
 
 export const router = Router();
