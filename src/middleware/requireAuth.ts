@@ -6,3 +6,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
   next();
 }
+
+export function getUserId(req: Request): string {
+  return req.session.userId as string;
+}
