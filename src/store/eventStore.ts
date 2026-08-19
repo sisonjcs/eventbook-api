@@ -50,7 +50,7 @@ export async function listEvents(): Promise<Event[]> {
 }
 
 /**
- * Counts how many confirmed bookings exist for a specific event
+ * Counts how many confirmed/pending bookings exist for a specific event
  *
  * @param eventId       Id of the event
  * @returns Number      Count of confirmed bookings
@@ -59,7 +59,7 @@ export async function countConfirmedBookings(eventId: string): Promise<number> {
   return await prisma.booking.count({
     where: {
       eventId: eventId,
-      status: "CONFIRMED",
+      OR: [{ status: "CONFIRMED" }, { status: "PENDING" }],
     },
   });
 }
