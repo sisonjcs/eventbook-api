@@ -7,13 +7,15 @@ import { EventNotFoundError, SoldOutError } from "../errors";
  * Transaction is locked to handle race condition.
  * Transaction is dropped as a whole if an error is encountered.
  *
- * @param eventId     Id of the event being booked
- * @param userId      Id of the user booking the event
- * @returns Booking   Created booking
+ * @param eventId          Id of the event being booked
+ * @param userId           Id of the user booking the event
+ * @param expiryInMinutes  How many minutes from the current time will the booking expire
+ * @returns Booking        Created booking
  */
 export async function bookSeat(
   eventId: string,
   userId: string,
+  expiryInMinutes: number,
 ): Promise<Booking> {
   return await prisma.$transaction(async (tx) => {
     const events = await tx.$queryRaw<
@@ -34,11 +36,14 @@ export async function bookSeat(
       throw new SoldOutError();
     }
 
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + expiryInMinutes);
+
     return await tx.booking.create({
       data: {
         event: { connect: { id: eventId } },
         bookedBy: { connect: { id: userId } },
-        status: "CONFIRMED",
+        expiresAt,
       },
     });
   });
