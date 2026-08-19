@@ -11,3 +11,24 @@ export class SoldOutError extends Error {
     this.name = "SoldOutError";
   }
 }
+
+export class BookingNotFoundError extends Error {
+  constructor() {
+    super("Booking not found");
+    this.name = "BookingNotFoundError";
+  }
+}
+
+export class BookingAlreadyConfirmedError extends Error {
+  constructor() {
+    super("Booking already confirmed");
+    this.name = "BookingAlreadyConfirmedError";
+  }
+}
+
+export class BookingExpiredError extends Error {
+  constructor() {
+    super("Booking is expired");
+    this.name = "BookingExpiredError";
+  }
+}
