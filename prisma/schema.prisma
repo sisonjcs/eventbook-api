@@ -40,6 +40,7 @@ model Booking {
   event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
   status        Status      @default(PENDING)
   createdAt     DateTime    @default(now())    
+  expiresAt     DateTime?    
 }
 
 enum Status {
