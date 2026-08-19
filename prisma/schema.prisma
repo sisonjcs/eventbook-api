@@ -38,11 +38,12 @@ model Booking {
   bookedBy      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   eventId       String
   event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  status        Status
+  status        Status      @default(PENDING)
   createdAt     DateTime    @default(now())    
 }
 
 enum Status {
   CONFIRMED
   PENDING
+  EXPIRED
 }
