@@ -1,6 +1,12 @@
 import { prisma } from "../prisma";
 import { Booking, Event } from "../generated/prisma/client";
-import { EventNotFoundError, SoldOutError } from "../errors";
+import {
+  BookingAlreadyConfirmedError,
+  BookingExpiredError,
+  BookingNotFoundError,
+  EventNotFoundError,
+  SoldOutError,
+} from "../errors";
 
 /**
  * Books a seat on an event if there is an available seat.
@@ -57,4 +63,67 @@ export async function bookSeat(
  */
 export async function findBookingsByEvent(eventId: string): Promise<Booking[]> {
   return await prisma.booking.findMany({ where: { eventId: eventId } });
+}
+
+/**
+ * Confirms a booking as long as the ownership is verified and the booking hasn't expired yet.
+ * If booking is past expiry, status is updated.
+ *
+ * @param bookingId     Id of the booking to be confirmed
+ * @param userId        Id of the user who owns the booking
+ * @returns Booking     Confirmed booking
+ */
+export async function confirmBooking(
+  bookingId: string,
+  userId: string,
+): Promise<Booking> {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId, userId },
+  });
+
+  if (booking === undefined) {
+    throw new BookingNotFoundError();
+  }
+
+  if (
+    booking?.status === "PENDING" &&
+    booking.expiresAt!.getTime() < Date.now()
+  ) {
+    return await prisma.booking.update({
+      where: {
+        id: bookingId,
+        userId,
+      },
+      data: {
+        status: "CONFIRMED",
+        expiresAt: null,
+      },
+    });
+  } else if (booking!.expiresAt!.getTime() >= Date.now()) {
+    await prisma.booking.update({
+      where: {
+        id: bookingId,
+        userId,
+      },
+      data: {
+        status: "EXPIRED",
+        expiresAt: null,
+      },
+    });
+    throw new BookingExpiredError();
+  } else if (booking?.status === "CONFIRMED") {
+    throw new BookingAlreadyConfirmedError();
+  } else {
+    throw new BookingExpiredError();
+  }
+}
+
+/**
+ * Returns all the bookings of a specific user
+ *
+ * @param userId        Id of the user
+ * @returns Booking[]   List of bookings
+ */
+export async function findBookingsByUser(userId: string): Promise<Booking[]> {
+  return await prisma.booking.findMany({ where: { userId } });
 }
