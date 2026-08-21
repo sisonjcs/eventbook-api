@@ -32,3 +32,10 @@ export class BookingExpiredError extends Error {
     this.name = "BookingExpiredError";
   }
 }
+
+export class BookingForbiddenError extends Error {
+  constructor() {
+    super("Given user does not own booking");
+    this.name = "BookingForbiddenError";
+  }
+}
