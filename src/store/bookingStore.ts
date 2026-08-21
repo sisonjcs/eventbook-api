@@ -3,6 +3,7 @@ import { Booking, Event } from "../generated/prisma/client";
 import {
   BookingAlreadyConfirmedError,
   BookingExpiredError,
+  BookingForbiddenError,
   BookingNotFoundError,
   EventNotFoundError,
   SoldOutError,
@@ -81,32 +82,29 @@ export async function confirmBooking(
   userId: string,
 ): Promise<Booking> {
   const booking = await prisma.booking.findUnique({
-    where: { id: bookingId, userId },
+    where: { id: bookingId },
   });
 
-  if (booking === undefined) {
+  if (!booking) {
     throw new BookingNotFoundError();
   }
 
-  if (
-    booking?.status === "PENDING" &&
-    booking.expiresAt!.getTime() > Date.now()
-  ) {
-    return await prisma.booking.update({
-      where: {
-        id: bookingId,
-        userId,
-      },
-      data: {
-        status: "CONFIRMED",
-        expiresAt: null,
-      },
-    });
-  } else if (booking!.expiresAt!.getTime() < Date.now()) {
+  if (booking.userId !== userId) {
+    throw new BookingForbiddenError();
+  }
+
+  if (booking.status === "CONFIRMED") {
+    throw new BookingAlreadyConfirmedError();
+  }
+
+  if (booking.status === "EXPIRED") {
+    throw new BookingExpiredError();
+  }
+
+  if (booking!.expiresAt!.getTime() < Date.now()) {
     await prisma.booking.update({
       where: {
         id: bookingId,
-        userId,
       },
       data: {
         status: "EXPIRED",
@@ -114,11 +112,17 @@ export async function confirmBooking(
       },
     });
     throw new BookingExpiredError();
-  } else if (booking?.status === "CONFIRMED") {
-    throw new BookingAlreadyConfirmedError();
-  } else {
-    throw new BookingExpiredError();
   }
+
+  return await prisma.booking.update({
+    where: {
+      id: bookingId,
+    },
+    data: {
+      status: "CONFIRMED",
+      expiresAt: null,
+    },
+  });
 }
 
 /**
