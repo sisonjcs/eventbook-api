@@ -67,15 +67,9 @@ router.post(
   "/events/:id/book",
   requireAuth,
   async (req: Request, res: Response) => {
-    const { expiryInMinutes } = req.body;
-
-    if (!expiryInMinutes) {
-      return res.status(400).send({ error: "Missing booking details" });
-    }
-
     try {
       const eventId = req.params.id as string;
-      const booking = await bookSeat(eventId, getUserId(req), expiryInMinutes);
+      const booking = await bookSeat(eventId, getUserId(req));
 
       return res.status(201).send(booking);
     } catch (error) {
