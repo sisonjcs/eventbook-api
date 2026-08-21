@@ -40,16 +40,16 @@ router.post(
 );
 
 /**
- * GET /bookings/:id
+ * GET /bookings/mine
  *
  * Public
- * Returns a list of all the bookings the user has
+ * Returns a list of all the bookings the current user has
  */
 router.get(
-  "/bookings/:id",
+  "/bookings/mine",
   requireAuth,
   async (req: Request, res: Response) => {
-    const userId = req.params.id as string;
+    const userId = getUserId(req);
 
     const bookings = await findBookingsByUser(userId);
 
