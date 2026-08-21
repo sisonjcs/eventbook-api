@@ -5,6 +5,7 @@ import {
   BookingNotFoundError,
   BookingAlreadyConfirmedError,
   BookingExpiredError,
+  BookingForbiddenError,
 } from "../errors";
 
 export const router = Router();
@@ -35,6 +36,11 @@ router.post(
       if (error instanceof BookingExpiredError) {
         return res.status(410).send({ error: error.message });
       }
+      if (error instanceof BookingForbiddenError) {
+        return res.status(403).send({ error: error.message });
+      }
+
+      return res.status(500).send({ error: "Something went wrong" });
     }
   },
 );
