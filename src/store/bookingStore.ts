@@ -45,8 +45,7 @@ export async function bookSeat(
       throw new SoldOutError();
     }
 
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + DEFAULT_HOLD_MINUTES);
+    const expiresAt = new Date(Date.now() + DEFAULT_HOLD_MINUTES * 60 * 1000);
 
     return await tx.booking.create({
       data: {
