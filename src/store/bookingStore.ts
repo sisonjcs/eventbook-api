@@ -8,6 +8,7 @@ import {
   EventNotFoundError,
   SoldOutError,
 } from "../errors";
+import { DEFAULT_HOLD_MINUTES } from "../config";
 
 /**
  * Books a seat on an event if there is an available seat.
@@ -16,13 +17,11 @@ import {
  *
  * @param eventId          Id of the event being booked
  * @param userId           Id of the user booking the event
- * @param expiryInMinutes  How many minutes from the current time will the booking expire
  * @returns Booking        Created booking
  */
 export async function bookSeat(
   eventId: string,
   userId: string,
-  expiryInMinutes: number,
 ): Promise<Booking> {
   return await prisma.$transaction(async (tx) => {
     const events = await tx.$queryRaw<
@@ -47,7 +46,7 @@ export async function bookSeat(
     }
 
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + expiryInMinutes);
+    expiresAt.setMinutes(expiresAt.getMinutes() + DEFAULT_HOLD_MINUTES);
 
     return await tx.booking.create({
       data: {
