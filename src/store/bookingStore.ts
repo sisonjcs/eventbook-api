@@ -35,7 +35,10 @@ export async function bookSeat(
     }
 
     const confirmedBookings: number = await tx.booking.count({
-      where: { eventId: eventId, status: "CONFIRMED" },
+      where: {
+        eventId: eventId,
+        status: { in: ["CONFIRMED", "PENDING"] },
+      },
     });
 
     if (event.totalSeats - confirmedBookings <= 0) {
