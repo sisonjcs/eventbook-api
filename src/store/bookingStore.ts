@@ -90,7 +90,7 @@ export async function confirmBooking(
 
   if (
     booking?.status === "PENDING" &&
-    booking.expiresAt!.getTime() < Date.now()
+    booking.expiresAt!.getTime() > Date.now()
   ) {
     return await prisma.booking.update({
       where: {
@@ -102,7 +102,7 @@ export async function confirmBooking(
         expiresAt: null,
       },
     });
-  } else if (booking!.expiresAt!.getTime() >= Date.now()) {
+  } else if (booking!.expiresAt!.getTime() < Date.now()) {
     await prisma.booking.update({
       where: {
         id: bookingId,
