@@ -13,12 +13,11 @@ FROM node:20-slim AS runner
 
 WORKDIR /app
 
-COPY --from=builder /app/package.json /app/package-lock.json
-RUN npm install --omit=dev
+COPY --from=builder /app/package.json /app/package-lock.json ./
+RUN npm ci --omit=dev
 
-COPY --from=builder /app/dist .dist
+COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/generated ./src/generated
-COPY prisma .prisma
 
 EXPOSE 3000
 
