@@ -1,0 +1,25 @@
+FROM node:20 AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm install
+
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+FROM node:20-slim AS runner
+
+WORKDIR /app
+
+COPY --from=builder /app/package.json /app/package-lock.json
+RUN npm install --omit=dev
+
+COPY --from=builder /app/dist .dist
+COPY --from=builder /app/src/generated ./src/generated
+COPY prisma .prisma
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
