@@ -5,6 +5,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
     depends_on:
       db:
         condition: service_healthy
