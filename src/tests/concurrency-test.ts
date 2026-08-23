@@ -1,10 +1,17 @@
 /**
- * Test to check concurrency for booking a seat
+ * Test to check concurrency for booking a seat.
+ * Usage:
+ *   node concurrency-test.ts              -> runs against local dev
+ *   node concurrency-test.ts --prod       -> runs against production
  */
 
+const DEV_URL = "http://localhost:3000";
+const PRODUCTION_URL = "https://eventbook-api-il5s.onrender.com";
+
+const BASE_URL = process.argv.includes("--prod") ? PRODUCTION_URL : DEV_URL;
+
 async function register(username: string, password: string) {
-  // Ignore failures here
-  await fetch("http://localhost:3000/register", {
+  await fetch(`${BASE_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -12,7 +19,7 @@ async function register(username: string, password: string) {
 }
 
 async function login(username: string, password: string) {
-  const res = await fetch("http://localhost:3000/login", {
+  const res = await fetch(`${BASE_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -22,7 +29,7 @@ async function login(username: string, password: string) {
 }
 
 async function createEvent(cookie: string) {
-  const res = await fetch("http://localhost:3000/events", {
+  const res = await fetch(`${BASE_URL}/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Cookie: cookie },
     body: JSON.stringify({
@@ -36,7 +43,7 @@ async function createEvent(cookie: string) {
 }
 
 async function book(eventId: string, cookie: string) {
-  const res = await fetch(`http://localhost:3000/events/${eventId}/book`, {
+  const res = await fetch(`${BASE_URL}/events/${eventId}/book`, {
     method: "POST",
     headers: { Cookie: cookie },
   });
@@ -44,6 +51,8 @@ async function book(eventId: string, cookie: string) {
 }
 
 async function main() {
+  console.log(`Running against: ${BASE_URL}`);
+
   await register("userA", "password123");
   await register("userB", "password123");
 
@@ -54,8 +63,7 @@ async function main() {
     throw new Error("Login failed — check credentials or server logs");
   }
 
-  const organizerCookie = cookieA; // reuse userA as the organizer, doesn't matter who
-  const eventId = await createEvent(organizerCookie);
+  const eventId = await createEvent(cookieA);
   console.log("Created test event:", eventId);
 
   await Promise.all([book(eventId, cookieA), book(eventId, cookieB)]);
