@@ -1,5 +1,7 @@
 /**
  * Test to check if booking expiration works
+ *
+ * Change DEFAULT_HOLD_MINUTES in config.ts to 0.1 before running test
  */
 const BASE = "http://localhost:3000";
 
