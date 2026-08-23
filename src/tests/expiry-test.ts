@@ -1,12 +1,21 @@
 /**
  * Test to check if booking expiration works
  *
- * Change DEFAULT_HOLD_MINUTES in config.ts to 0.1 before running test
+ * Change DEFAULT_HOLD_MINUTES in config.ts to 0.1 before running against
+ * either environment, so the 8s wait below actually exceeds the hold window.
+ *
+ * Usage:
+ *   node expiry-test.ts          -> runs against local dev
+ *   node expiry-test.ts --prod   -> runs against production
  */
-const BASE = "http://localhost:3000";
+
+const DEV_URL = "http://localhost:3000";
+const PRODUCTION_URL = "https://eventbook-api-il5s.onrender.com";
+
+const BASE_URL = process.argv.includes("--prod") ? PRODUCTION_URL : DEV_URL;
 
 async function register(username: string, password: string) {
-  await fetch(`${BASE}/register`, {
+  await fetch(`${BASE_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -14,7 +23,7 @@ async function register(username: string, password: string) {
 }
 
 async function login(username: string, password: string) {
-  const res = await fetch(`${BASE}/login`, {
+  const res = await fetch(`${BASE_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -23,7 +32,7 @@ async function login(username: string, password: string) {
 }
 
 async function createEvent(cookie: string, title: string, totalSeats: number) {
-  const res = await fetch(`${BASE}/events`, {
+  const res = await fetch(`${BASE_URL}/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Cookie: cookie },
     body: JSON.stringify({ title, description: "test event", totalSeats }),
@@ -32,7 +41,7 @@ async function createEvent(cookie: string, title: string, totalSeats: number) {
 }
 
 async function bookSeat(cookie: string, eventId: string) {
-  const res = await fetch(`${BASE}/events/${eventId}/book`, {
+  const res = await fetch(`${BASE_URL}/events/${eventId}/book`, {
     method: "POST",
     headers: { Cookie: cookie },
   });
@@ -40,7 +49,7 @@ async function bookSeat(cookie: string, eventId: string) {
 }
 
 async function confirmBooking(cookie: string, bookingId: string) {
-  const res = await fetch(`${BASE}/bookings/${bookingId}/confirm`, {
+  const res = await fetch(`${BASE_URL}/bookings/${bookingId}/confirm`, {
     method: "POST",
     headers: { Cookie: cookie },
   });
@@ -48,6 +57,8 @@ async function confirmBooking(cookie: string, bookingId: string) {
 }
 
 async function main() {
+  console.log(`Running against: ${BASE_URL}`);
+
   await register("expiryuser", "password123");
   const cookie = await login("expiryuser", "password123");
 
@@ -77,7 +88,7 @@ async function main() {
   );
 
   console.log("Waiting past hold window...");
-  await new Promise((r) => setTimeout(r, 8000)); // wait longer than your test hold duration
+  await new Promise((r) => setTimeout(r, 8000));
 
   const confirm2 = await confirmBooking(cookie, booking2.body.id);
   console.log(
@@ -86,7 +97,6 @@ async function main() {
     confirm2.body,
   );
 
-  // Seat should now be free again — try booking event2 a second time
   const booking3 = await bookSeat(cookie, event2.id);
   console.log(
     "Re-book same event after expiry (should be 201, seat released):",
