@@ -1,21 +1,41 @@
 /**
- * Test to check concurrency for bookin a seat
+ * Test to check concurrency for booking a seat
  */
 
-// Make sure event id exists
-const eventId = "5890e901-48c9-4d58-afa8-47c5d6c9585a";
+async function register(username: string, password: string) {
+  // Ignore failures here
+  await fetch("http://localhost:3000/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+}
 
-async function getCookie(username: string, password: string) {
+async function login(username: string, password: string) {
   const res = await fetch("http://localhost:3000/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
   const setCookie = res.headers.get("set-cookie");
-  return setCookie?.split(";")[0]; // just the "name=value" part
+  return setCookie?.split(";")[0];
 }
 
-async function book(cookie: string) {
+async function createEvent(cookie: string) {
+  const res = await fetch("http://localhost:3000/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify({
+      title: "Concurrency Test Event",
+      description: "single-seat event for race condition testing",
+      totalSeats: 1,
+    }),
+  });
+  const event = await res.json();
+  return event.id;
+}
+
+async function book(eventId: string, cookie: string) {
   const res = await fetch(`http://localhost:3000/events/${eventId}/book`, {
     method: "POST",
     headers: { Cookie: cookie },
@@ -24,10 +44,21 @@ async function book(cookie: string) {
 }
 
 async function main() {
-  // Make sure users exist
-  const cookieA = await getCookie("userA", "password123");
-  const cookieB = await getCookie("userB", "password123");
-  await Promise.all([book(cookieA!), book(cookieB!)]);
+  await register("userA", "password123");
+  await register("userB", "password123");
+
+  const cookieA = await login("userA", "password123");
+  const cookieB = await login("userB", "password123");
+
+  if (!cookieA || !cookieB) {
+    throw new Error("Login failed — check credentials or server logs");
+  }
+
+  const organizerCookie = cookieA; // reuse userA as the organizer, doesn't matter who
+  const eventId = await createEvent(organizerCookie);
+  console.log("Created test event:", eventId);
+
+  await Promise.all([book(eventId, cookieA), book(eventId, cookieB)]);
 }
 
 main();
