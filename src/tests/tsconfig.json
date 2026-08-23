@@ -3,5 +3,6 @@
   "compilerOptions": {
     "outDir": "../../dist-tests"
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts"],
+  "exclude": []
 }
