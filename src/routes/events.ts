@@ -3,6 +3,7 @@ import { createEvent, findEventById, listEvents } from "../store/eventStore";
 import { bookSeat, findBookingsByEvent } from "../store/bookingStore";
 import { getUserId, requireAuth } from "../middleware/requireAuth";
 import { EventNotFoundError, SoldOutError } from "../errors";
+import { bookingRateLimiter } from "../middleware/bookingRateLimiter";
 
 export const router = Router();
 
@@ -66,6 +67,7 @@ router.get("/events/:id", async (req: Request, res: Response) => {
 router.post(
   "/events/:id/book",
   requireAuth,
+  bookingRateLimiter,
   async (req: Request, res: Response) => {
     try {
       const eventId = req.params.id as string;
