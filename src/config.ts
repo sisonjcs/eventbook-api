@@ -1,1 +1,4 @@
 export const DEFAULT_HOLD_MINUTES = 10;
+export const CACHE_TTL_SECONDS = 60;
+export const BOOKING_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+export const BOOKING_RATE_LIMIT_MAX = 10;
