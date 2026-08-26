@@ -7,6 +7,11 @@ import {
   BOOKING_RATE_LIMIT_MAX,
 } from "../config";
 
+/**
+ * Rate limiter for the booking endpoint (/events/:id/book)
+ *
+ * Maximum of 10 requests per second
+ */
 export const bookingRateLimiter = rateLimit({
   windowMs: BOOKING_RATE_LIMIT_WINDOW_MS,
   limit: BOOKING_RATE_LIMIT_MAX,
