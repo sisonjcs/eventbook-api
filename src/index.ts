@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import session from "express-session";
 import "dotenv/config";
+import { connectRedis } from "./redis";
 import { router as authRouter } from "./routes/auth";
 import { router as eventsRouter } from "./routes/events";
 import { router as bookingsRouter } from "./routes/bookings";
@@ -27,6 +28,11 @@ app.use(authRouter);
 app.use(eventsRouter);
 app.use(bookingsRouter);
 
-app.listen(3000, () => {
-  console.log("Listening on port 3000");
-});
+async function main() {
+  await connectRedis();
+  app.listen(3000, () => {
+    console.log("Listening on port 3000");
+  });
+}
+
+main();
