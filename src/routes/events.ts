@@ -4,6 +4,7 @@ import { bookSeat, findBookingsByEvent } from "../store/bookingStore";
 import { getUserId, requireAuth } from "../middleware/requireAuth";
 import { EventNotFoundError, SoldOutError } from "../errors";
 import { bookingRateLimiter } from "../middleware/bookingRateLimiter";
+import { getCachedEvents, setCachedEvents } from "../cache/eventCache";
 
 export const router = Router();
 
@@ -34,11 +35,16 @@ router.post("/events", requireAuth, async (req: Request, res: Response) => {
  * GET /events
  *
  * Public
- * Returns a list of events found in the database
+ * Returns a list of events found in the Redis' cache or from the database and cache it
  */
 router.get("/events", async (req: Request, res: Response) => {
-  const events = await listEvents();
+  const cached = await getCachedEvents();
+  if (cached) {
+    return res.status(200).send(cached);
+  }
 
+  const events = await listEvents();
+  await setCachedEvents(events);
   return res.status(200).send(events);
 });
 
