@@ -5,6 +5,7 @@ import { getUserId, requireAuth } from "../middleware/requireAuth";
 import { EventNotFoundError, SoldOutError } from "../errors";
 import { bookingRateLimiter } from "../middleware/bookingRateLimiter";
 import { getCachedEvents, setCachedEvents } from "../cache/eventCache";
+import { logger } from "../logger";
 
 export const router = Router();
 
@@ -28,6 +29,7 @@ router.post("/events", requireAuth, async (req: Request, res: Response) => {
     totalSeats,
   );
 
+  logger.info("Successfully created a new event");
   return res.status(201).send(event);
 });
 
@@ -77,19 +79,22 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const eventId = req.params.id as string;
-      const booking = await bookSeat(eventId, getUserId(req));
+      const userId = getUserId(req);
+      const booking = await bookSeat(eventId, userId);
 
+      logger.info({ eventId, userId }, "Successfully created a new booking");
       return res.status(201).send(booking);
     } catch (error) {
       if (error instanceof EventNotFoundError) {
+        logger.warn("Booking attempt on an event that cannot be found");
         return res.status(404).send({ error: error.message });
       }
       if (error instanceof SoldOutError) {
+        logger.warn("Booking attempt on a sold-out event");
         return res.status(409).send({ error: error.message });
       }
 
-      console.error(error);
-
+      logger.error({ err: error }, "Unexpected error during booking");
       return res.status(500).send({ error: "Something went wrong" });
     }
   },

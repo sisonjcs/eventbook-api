@@ -5,6 +5,7 @@ import {
   findUserByUsername,
 } from "../store/userStore";
 import bcrypt from "bcrypt";
+import { logger } from "../logger";
 
 export const router = Router();
 
@@ -29,6 +30,10 @@ router.post("/register", async (req: Request, res: Response) => {
   const passwordHash = await bcrypt.hash(password, 10);
 
   const newUser = await createUser(username, passwordHash);
+  logger.info(
+    { userId: newUser.id, username: newUser.username },
+    "User registered",
+  );
   return res.status(201).send(newUser);
 });
 
@@ -47,9 +52,11 @@ router.post("/login", async (req: Request, res: Response) => {
 
   if (await bcrypt.compare(password, user.passwordHash)) {
     req.session.userId = user.id;
+    logger.info({ userId: user.id }, "User logged in");
     return res.status(200).send({ id: user.id, username: user.username });
   }
 
+  logger.warn({ userId: user.id }, "Failed login attempt");
   return res.status(401).send({ error: "Invalid login credentials." });
 });
 
@@ -83,9 +90,11 @@ router.post("/logout", (req: Request, res: Response) => {
 
   req.session.destroy((err: Error) => {
     if (err) {
+      logger.error({ err }, "Unexpected error occurred");
       return res.status(500).send({ error: "Something went wrong." });
     }
 
+    logger.info("User logged out");
     return res.status(200).send({ message: "Successfully logged out." });
   });
 });
