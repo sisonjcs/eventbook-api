@@ -6,6 +6,7 @@ import {
   BOOKING_RATE_LIMIT_WINDOW_MS,
   BOOKING_RATE_LIMIT_MAX,
 } from "../config";
+import { logger } from "../logger";
 
 /**
  * Rate limiter for the booking endpoint (/events/:id/book)
@@ -21,4 +22,15 @@ export const bookingRateLimiter = rateLimit({
   store: new RedisStore({
     sendCommand: (...args: string[]) => redisClient.sendCommand(args),
   }),
+  handler: (req, res) => {
+    logger.warn(
+      {
+        userId: getUserId(req),
+        path: req.path,
+      },
+      "Rate limit exceeded",
+    );
+
+    res.status(429).send({ error: "Too many booking attempts" });
+  },
 });
