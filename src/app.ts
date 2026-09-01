@@ -15,10 +15,7 @@ export function createApp() {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        /**
-         * Will revisit for deployment, false for now since this is for local dev only
-         */
-        secure: false,
+        secure: process.env.NODE_ENV === "production",
       },
     }),
   );
