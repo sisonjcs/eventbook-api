@@ -8,6 +8,7 @@ import { router as bookingsRouter } from "./routes/bookings";
 export function createApp() {
   const app = express();
   app.use(express.json());
+  app.set("trust proxy", 1);
   app.use(
     session({
       secret: process.env.SESSION_SECRET!,
