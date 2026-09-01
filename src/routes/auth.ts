@@ -10,11 +10,38 @@ import { logger } from "../logger";
 export const router = Router();
 
 /**
- * POST /register
- *
- * Creates a new user by registering their desired username and hashed password.
- * The system checks for any duplicate usernames before proceeding to hash the given password.
- * The new user is then created and added to the user list.
+ * @openapi
+ * /register:
+ *   post:
+ *     summary: Register a new user account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 username:
+ *                   type: string
+ *       400:
+ *         description: Missing username or password
+ *       409:
+ *         description: Username already taken
  */
 router.post("/register", async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -34,14 +61,40 @@ router.post("/register", async (req: Request, res: Response) => {
     { userId: newUser.id, username: newUser.username },
     "User registered",
   );
-  return res.status(201).send(newUser);
+  return res.status(201).send({ id: newUser.id, username: newUser.username });
 });
 
 /**
- * POST /login
- *
- * Sets the session's user id to the logged in user.
- * Verifies the user's credentials before logging in the user.
+ * @openapi
+ * /login:
+ *   post:
+ *     summary: Log in and start a session
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Logged in successfully, session cookie set
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 username:
+ *                   type: string
+ *       401:
+ *         description: Invalid username or password
  */
 router.post("/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -61,9 +114,26 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 /**
- * GET /me
- *
- * Returns the user's safe credentials (username and id) if the user is in a session, else returns a status code of 401 Unauthorized.
+ * @openapi
+ * /me:
+ *   get:
+ *     summary: Get the currently authenticated user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: The current user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 username:
+ *                   type: string
+ *       401:
+ *         description: Not authenticated
  */
 router.get("/me", async (req: Request, res: Response) => {
   if (req.session.userId) {
@@ -78,10 +148,19 @@ router.get("/me", async (req: Request, res: Response) => {
 });
 
 /**
- * POST /logout
- *
- * Logs out the user that is in a session. If no user is in session, send an error message.
- * Else, destroy the session.
+ * @openapi
+ * /logout:
+ *   post:
+ *     summary: Log out and destroy the current session
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out
+ *       400:
+ *         description: No user is currently logged in
+ *       500:
+ *         description: Session could not be destroyed
  */
 router.post("/logout", (req: Request, res: Response) => {
   if (!req.session.userId) {

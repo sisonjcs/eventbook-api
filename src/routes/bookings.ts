@@ -10,11 +10,48 @@ import {
 import { logger } from "../logger";
 
 export const router = Router();
+
 /**
- * POST /bookings/:id/confirm
- *
- * Authenticated
- * Confirms a pending booking
+ * @openapi
+ * /bookings/{id}/confirm:
+ *   post:
+ *     summary: Confirm a pending booking before it expires
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Booking confirmed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 eventId:
+ *                   type: string
+ *                 userId:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                   enum: [PENDING, CONFIRMED, EXPIRED]
+ *       400:
+ *         description: Booking is already confirmed
+ *       403:
+ *         description: This booking does not belong to the current user
+ *       404:
+ *         description: Booking not found
+ *       410:
+ *         description: Booking's hold window has expired
+ *       500:
+ *         description: Unexpected server error
  */
 router.post(
   "/bookings/:id/confirm",
@@ -49,7 +86,7 @@ router.post(
       if (error instanceof BookingForbiddenError) {
         logger.warn(
           { bookingId: req.params.id, userId: getUserId(req) },
-          "Booking confirmation attempt on an expired booking",
+          "Booking confirmation attempt by non-owner",
         );
         return res.status(403).send({ error: error.message });
       }
@@ -61,10 +98,29 @@ router.post(
 );
 
 /**
- * GET /bookings/mine
- *
- * Public
- * Returns a list of all the bookings the current user has
+ * @openapi
+ * /bookings/mine:
+ *   get:
+ *     summary: List all bookings belonging to the current user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of the current user's bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   eventId:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                     enum: [PENDING, CONFIRMED, EXPIRED]
  */
 router.get(
   "/bookings/mine",

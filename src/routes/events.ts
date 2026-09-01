@@ -10,10 +10,31 @@ import { logger } from "../logger";
 export const router = Router();
 
 /**
- * POST /events
- *
- * Authenticated
- * Creates a new event given that the user creating the event is authenticated and has given all the details required
+ * @openapi
+ * /events:
+ *   post:
+ *     summary: Create a new event
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, description, totalSeats]
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               totalSeats:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Event created
+ *       400:
+ *         description: Missing event details
  */
 router.post("/events", requireAuth, async (req: Request, res: Response) => {
   const { title, description, totalSeats } = req.body;
@@ -34,10 +55,30 @@ router.post("/events", requireAuth, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /events
- *
- * Public
- * Returns a list of events found in the Redis' cache or from the database and cache it
+/**
+ * @openapi
+ * /events:
+ *   get:
+ *     summary: List all events with live seat availability
+ *     description: Served from a short-lived Redis cache when available; falls back to the database on a cache miss.
+ *     responses:
+ *       200:
+ *         description: A list of events
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   totalSeats:
+ *                     type: integer
  */
 router.get("/events", async (req: Request, res: Response) => {
   const cached = await getCachedEvents();
@@ -51,10 +92,21 @@ router.get("/events", async (req: Request, res: Response) => {
 });
 
 /**
- * GET /events/:id
- *
- * Public
- * Returns the event associated with the given id
+ * @openapi
+ * /events/{id}:
+ *   get:
+ *     summary: Get a single event by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: The requested event
+ *       404:
+ *         description: Event not found
  */
 router.get("/events/:id", async (req: Request, res: Response) => {
   const event = await findEventById(req.params.id as string);
@@ -67,10 +119,30 @@ router.get("/events/:id", async (req: Request, res: Response) => {
 });
 
 /**
- * POST /events/:id/book
- *
- * Authenticated
- * Creates a booking for the specified event
+ * @openapi
+ * /events/{id}/book:
+ *   post:
+ *     summary: Reserve a seat on an event
+ *     description: Creates a PENDING booking with a time-limited hold. Rate-limited to prevent abuse.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Booking created with PENDING status
+ *       404:
+ *         description: Event not found
+ *       409:
+ *         description: Event is sold out
+ *       429:
+ *         description: Too many booking attempts, rate limit exceeded
+ *       500:
+ *         description: Unexpected server error
  */
 router.post(
   "/events/:id/book",
@@ -101,10 +173,25 @@ router.post(
 );
 
 /**
- * GET /events/:id/bookings
- *
- * Authenticated, Organizer-only
- * Returns a list of bookings of a specific event
+ * @openapi
+ * /events/{id}/bookings:
+ *   get:
+ *     summary: List all bookings for an event (organizer only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A list of bookings for the event
+ *       403:
+ *         description: Only the event's organizer can view its bookings
+ *       404:
+ *         description: Event not found
  */
 router.get(
   "/events/:id/bookings",

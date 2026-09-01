@@ -4,6 +4,8 @@ import { router as healthRouter } from "./routes/health";
 import { router as authRouter } from "./routes/auth";
 import { router as eventsRouter } from "./routes/events";
 import { router as bookingsRouter } from "./routes/bookings";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger";
 
 export function createApp() {
   const app = express();
@@ -24,6 +26,7 @@ export function createApp() {
   app.use(authRouter);
   app.use(eventsRouter);
   app.use(bookingsRouter);
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   return app;
 }
