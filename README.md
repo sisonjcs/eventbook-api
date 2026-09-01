@@ -72,7 +72,7 @@ docker compose exec app npx prisma migrate deploy
 | GET    | `/bookings/mine`        | Yes                  | List the current user's bookings                        |
 | GET    | `/health`               | No                   | Reports Postgres and Redis connectivity (`200`/`503`)   |
 
-> Full interactive API documentation: _[link to be added]_
+> **Full interactive API documentation:** [SwaggerDocs](https://eventbook-api-il5s.onrender.com/docs/)
 
 ## Testing
 
